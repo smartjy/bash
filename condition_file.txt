@@ -1,0 +1,6 @@
+-d : file exists ans is a directory
+-e : file exists
+-r : file exists ans the read permission is grated
+-s : file exists ans it's size is greater than zero (le. it is not empty)
+-w : file exists ans the write permission is granted
+-x : file exists and the execute permission is granted
