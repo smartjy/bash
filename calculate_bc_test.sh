@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 
 read num1 num2 num3
 #num1=20.5
