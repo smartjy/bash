@@ -1,0 +1,30 @@
+#!/bin/sh
+
+suba=192
+subb=168
+subc=23
+subd=99
+
+ipaddr=$suba\.$subb\.$subc\.$subd
+
+#echo $ipaddr
+echo "##########################"
+
+CMD=`sshpass -proot scp ./ip_get.sh root@$ipaddr:/tmp/`
+while true 
+do
+  subd=`expr $subd + 1`;
+  sleep 1;
+  ipaddr=$suba\.$subb\.$subc\.$subd
+  CMD=`sshpass -proot scp ./ip_get.sh root@$ipaddr:/tmp/`
+  $CMD
+  echo $?
+  echo "$ipaddr"
+#    if [ $? -eq 0 ]; then
+    if [ $CMD ]; then
+      echo "OK"
+    else
+      echo "FAIL"
+      exit
+    fi
+done

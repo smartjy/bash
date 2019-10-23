@@ -1,0 +1,39 @@
+#/bin/bash
+
+DATE=`date +%Y%m%d%H%M%S`
+sub1=192; sub2=168; sub3=15; sub4=100
+USER=wasuser
+PASSWD=wasuser
+WARNAME="test.war"
+
+APPDIR="/opt/was/app"
+SERVER_BASE="/opt/was/servers/tomcat8_21"
+SSHOPTION="-oStrictHostKeyChecking=no"
+
+SOURCE=$sub1.$sub2.$sub3.$sub4; 
+echo "# SOURCE:  $SOURCE ##########";
+
+echo "# INFO result [0] = SUCCESS / result [NOT 0 ] = FAIL ";
+echo "";
+
+echo "# TASKS Start ######################################################";
+echo "# 1-1 SOURCE SERVER APPLICATION GET THIS SERVER";
+sshpass -p $PASSWD scp $USER@$SOURCE:/tmp/$WARNAME /tmp/$WARNAME ;
+echo "# 1-1 Result: $?";
+
+echo "# 2-1 TARGET SERVER APPLICATION BACKUP[move] #######################";
+sshpass -p $PASSWD  ssh $SSHOPTION $USER@192.168.15.200 mv $APPDIR/test.war $APPDIR/test.war.$DATE;
+echo "# 2-2 Result: $?";
+
+echo "# 3-1 THIS SERVER to TARGET SERVER APPLICATION COPY ################";
+sshpass -p $PASSWD  scp /tmp/$WARNAME $USER@192.168.15.200:$APPDIR/$WARNAME; 
+echo "# 3-2 Result: $?";
+
+echo "# 4-1TARGET SERVER Shutdown ########################################";
+sshpass -p $PASSWD  ssh -t $SSHOPTION $USER@192.168.15.200 'cd /opt/was/servers/tomcat8_21/bin; sudo -u wasuser ./kill.sh';
+echo "# Result: $?";
+
+echo "# 5-1 TARGET SERVER Startup ########################################";
+sshpass -p $PASSWD  ssh -t $SSHOPTION $USER@192.168.15.200 'cd /opt/was/servers/tomcat8_21/bin; sudo -u wasuser ./start.sh notail';
+echo "# Result: $?";
+echo "# TASKS END## ######################################################";
