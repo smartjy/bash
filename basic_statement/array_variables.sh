@@ -13,3 +13,4 @@ echo "${os[0]}"
 echo "${os[1]}"
 echo "${os[2]}"
 
+echo "${!os@}"
