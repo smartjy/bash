@@ -34,7 +34,7 @@ echo -e "#######################################################################
 read -p "$(echo -e "${INFO}[Press Enter] ${NC}")"
 
 
-# Defined aws-iam-authenticator 
+# Defined aws-iam-authenticator
 # ref: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/install-aws-iam-authenticator.html
 install_aws-iam-authenticator() {
   # set environment variables
@@ -54,7 +54,7 @@ install_aws-iam-authenticator() {
     if [ "$DOWNLOAD_IAM_CHECKSUM" == 200 ]; then
       echo -e "${INFO}## [INFO] $IAM_AUTH_CHECKSUM download successed ${NC}"
       openssl sha1 -sha256 $IAM_AUTH
-      
+
       echo -e "${INFO}## [INFO] Change execute mode ${NC}"
       [ -f "$IAM_AUTH" ] && chmod +x "./$IAM_AUTH"
 
@@ -160,7 +160,7 @@ set_kubeconfig() {
     read -p "$(echo -e "${QNA}## [INFO] Do you want to create $STAGING_KUBE_CONFIG? [Press Enter] ${NC}")"
 
     [ ! -d "$KUBE_HOME" ] && mkdir -p "$KUBE_HOME"
-    cat > "$STAGING_KUBE_CONFIG" << EOF    
+    cat > "$STAGING_KUBE_CONFIG" << EOF
 apiVersion: v1
 clusters:
 - cluster:
@@ -204,13 +204,12 @@ set_customrc() {
     cat > "$CUSTOMRC" << EOF
 ##### Kubectl zsh auto-completion #####
 source <(kubectl completion zsh)
-autoload -Uz compinit
-compinit
 
 ##### aws cli auto-completion #####
 # ref: https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/cli-configure-completion.html
-autoload bashcompinit && bashcompinit
 complete -C '/usr/local/bin/aws_completer' aws
+
+autoload -U +X bashcompinit && bashcompinit
 
 ##### KUBECONFIG environment variables #####
 export KUBE_HOME=\$HOME/.kube
