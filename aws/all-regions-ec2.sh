@@ -12,6 +12,6 @@ regions=($(aws ec2 describe-regions \
 
 for region in ${regions[@]}; do
     echo "$CNT -- "$region""
-    aws rds describe-db-instances --region $region --no-cli-pager --output text --query "DBInstances[*].DBInstanceIdentifier" 2>/dev/null
+    aws ec2 describe-instances --region $region --no-cli-pager --output text --query "Reservations[*].Instances[*].{Instance:InstanceId,State:Monitoring.State,Name:Tags[?Key=='Name']|[0].Value}" 2>/dev/null
     ((CNT++))
 done
