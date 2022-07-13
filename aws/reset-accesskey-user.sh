@@ -3,10 +3,12 @@
 DATE_FORMAT='+%Y-%m-%dT%H:%M:%S'
 DATE=$(date $DATE_FORMAT)
 INACTIVE_DATE=$(gdate -d '5 days ago' $DATE_FORMAT)
-# INACTIVE_DATE=$(gdate -d '1 mins ago' $DATE_FORMAT)
-DELETE_DATE=
+DELETE_DATE=$(gdate -d '($INACTIVE_DATE +5 days)' $DATE_FORMAT)
 AWS_PROFILE=''
 AWS_OPTS="--no-cli-pager --output text"
+
+echo "### Access key Inactive day = $INACTIVE_DATE"
+echo "### Access key Delete day = $DELETE_DATE"
 
 # USERS=$(aws --no-cli-pager --output text iam list-users  --query 'Users[*].[UserName]')
 USERS=$(aws iam list-users --query 'Users[*].[UserName]' --no-cli-pager --output text)
