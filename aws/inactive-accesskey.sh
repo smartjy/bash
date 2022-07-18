@@ -10,7 +10,6 @@ AWS_OPTS="--no-cli-pager --output text"
 echo "### Access key Inactive day = $INACTIVE_DATE"
 echo "### Access key Delete day = $DELETE_DATE"
 
-# USERS=$(aws --no-cli-pager --output text iam list-users  --query 'Users[*].[UserName]')
 USERS=$(aws iam list-users --query 'Users[*].[UserName]' --no-cli-pager --output text)
 list-access-keys() {
   # echo "### Access key IDs associated with the specified IAM user"
@@ -26,15 +25,10 @@ update-access-keys() {
 for USER in $USERS; do
   if [ "$USER" == 'access-key-test' ]; then
     echo "### IAM user == $USER  "
-    # echo "### Get ACCESS-KEYS of $USER"
-    # aws iam list-access-keys --user-name $USER --query 'AccessKeyMetadata[?CreateDate>=`'$DATE'`].[AccessKeyId]' --no-cli-pager --output text 
-    # list-access-keys $USER $INACTIVE_DATE
     for ACCESS_KEY in $(list-access-keys $USER $INACTIVE_DATE); do
       echo "Inactive keys $ACCESS_KEY"
       update-access-keys $ACCESS_KEY $USER
     done
-    # echo "Create ACCESS-KEYS of $USER"
-    # aws iam create-access-key --user-name $USER --no-cli-pager --output text 
     break
   fi
 done
