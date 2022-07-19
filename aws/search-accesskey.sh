@@ -12,7 +12,7 @@ fi
 DATE_FORMAT='+%Y-%m-%dT%H:%M:%S'
 # DATE_COMMON=$($DATE $DATE_FORMAT)
 INACTIVE_DATE=$($DATE -d '90 days ago' $DATE_FORMAT)
-DELETE_DATE=$($DATE -d '($INACTIVE_DATE +5 days)' $DATE_FORMAT)
+# DELETE_DATE=$($DATE -d '($INACTIVE_DATE +5 days)' $DATE_FORMAT)
 
 # aws cli environment variables 
 AWS_PROFILE="$1"
@@ -24,7 +24,7 @@ AWS_OPTS="--no-cli-pager --output text"
 echo -e ""
 echo -e "### Current AWS Profile is $AWS_PROFILE \n"
 echo -e "### Access key Inactive day = $INACTIVE_DATE"
-echo -e "### Access key Delete day = $DELETE_DATE \n"
+# echo -e "### Access key Delete day = $DELETE_DATE \n"
 
 slack-message() {
   # YOUR_WEBHOOK_URL='' # kr-team-rnd-dev
@@ -56,20 +56,17 @@ delete-access-keys() {
   aws iam list-access-keys $AWS_OPTS --user-name $1 $2
 }
 
-for USER in $(list-users); do
-  OLD_ACCESS_KEY_QL='AccessKeyMetadata[?CreateDate<=`'$INACTIVE_DATE'`].[AccessKeyId]'
-  for ACCESS_KEY in $(list-access-keys $USER "--query $OLD_ACCESS_KEY_QL" ); do
-    # update-access-keys $USER $ACCESS_KEY 
-    slack-message "$USER" "$ACCESS_KEY" ":warning: Active access key is older than 90 days!! Status changed active :arrow_right: inactive"
-  done
-done
-
 # for USER in $(list-users); do
-#   INACTIVE_ACCESS_KEY_QL='AccessKeyMetadata[?Status<=`Inactive`].[AccessKeyId]'
-#   for ACCESS_KEY in $(delete-access-key $USER "--query $INACTIVE_ACCESS_KEY_QL"); do
-#     slack-message "$USER" "$ACCESS_KEY" ":point_left: Inactive access keys have been deleted"
+#   OLD_KEY_QL='AccessKeyMetadata[?CreateDate<=`'$INACTIVE_DATE'`].[AccessKeyId]'
+#   for ACCESS_KEY in $(list-access-keys $USER "--query $OLD_KEY_QL" ); do
+#     # update-access-keys $USER $ACCESS_KEY 
+#     slack-message "$USER" "$ACCESS_KEY" ":warning: Active access key is older than 90 days!! Status changed active :arrow_right: inactive"
 #   done
 # done
 
-
-
+for USER in $(list-users); do
+  DELETE_KEY_QL='AccessKeyMetadata[?CreateDate>=`'$INACTIVE_DATE'`&&Status<=`Inactive`].[AccessKeyId]'
+  for ACCESS_KEY in $(list-access-keys $USER "--query $DELETE_KEY_QL" ); do
+    slack-message "$USER" "$ACCESS_KEY" ":point_left: Inactive access keys have been deleted"
+  done
+done
