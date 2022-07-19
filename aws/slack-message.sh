@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-YOUR_WEBHOOK_URL='https://hooks.slack.com/services/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'
+YOUR_WEBHOOK_URL=''
 
 curl -X POST -H 'Content-type: application/json' --data \
 '{
