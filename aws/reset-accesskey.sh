@@ -27,12 +27,12 @@ echo -e "### Access key Inactive day = $INACTIVE_DATE"
 # echo -e "### Access key Delete day = $DELETE_DATE \n"
 
 slack-message() {
-  # YOUR_WEBHOOK_URL='' # kr-team-rnd-dev
-  YOUR_WEBHOOK_URL='' # github-actions
+  YOUR_WEBHOOK_URL='' # kr-team-rnd-dev
+  # YOUR_WEBHOOK_URL='' # github-actions
   curl -X POST -H 'Content-type: application/json' --data \
   '{
     "icon_url": "https://a.slack-edge.com/80588/img/api/aws.png",
-    "text": "*'"$AWS_PROFILE"'* @'"$1"' `'"$2"'` '"$3"'",
+    "text": ":aws: *'"$AWS_PROFILE"'* @'"$1"' `'"$2"'` '"$3"'",
   }' $YOUR_WEBHOOK_URL
 }
 
@@ -56,17 +56,17 @@ delete-access-keys() {
   aws iam list-access-keys $AWS_OPTS --user-name $1 $2
 }
 
-# for USER in $(list-users); do
-#   OLD_KEY_QL='AccessKeyMetadata[?CreateDate<=`'$INACTIVE_DATE'`].[AccessKeyId]'
-#   for ACCESS_KEY in $(list-access-keys $USER "--query $OLD_KEY_QL" ); do
-#     # update-access-keys $USER $ACCESS_KEY 
-#     slack-message "$USER" "$ACCESS_KEY" ":warning: Active access key is older than 90 days!! Status changed active :arrow_right: inactive"
-#   done
-# done
-
 for USER in $(list-users); do
-  DELETE_KEY_QL='AccessKeyMetadata[?CreateDate>=`'$INACTIVE_DATE'`&&Status<=`Inactive`].[AccessKeyId]'
-  for ACCESS_KEY in $(list-access-keys $USER "--query $DELETE_KEY_QL" ); do
-    slack-message "$USER" "$ACCESS_KEY" ":point_left: Inactive access keys have been deleted"
+  OLD_KEY_QL='AccessKeyMetadata[?CreateDate<=`'$INACTIVE_DATE'`].[AccessKeyId]'
+  for ACCESS_KEY in $(list-access-keys $USER "--query $OLD_KEY_QL" ); do
+    # update-access-keys $USER $ACCESS_KEY 
+    slack-message "$USER" "$ACCESS_KEY" ":warning: Active access key is older than 90 days!! Status changed active :arrow_right: inactive"
   done
 done
+
+# for USER in $(list-users); do
+#   DELETE_KEY_QL='AccessKeyMetadata[?CreateDate>=`'$INACTIVE_DATE'`&&Status<=`Inactive`].[AccessKeyId]'
+#   for ACCESS_KEY in $(list-access-keys $USER "--query $DELETE_KEY_QL" ); do
+#     slack-message "$USER" "$ACCESS_KEY" ":point_left: Inactive access keys have been deleted"
+#   done
+# done
