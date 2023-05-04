@@ -22,6 +22,8 @@ KUBE_VERSION="1.25.7"
 KUBE_DOWNLOAD_URL="https://s3.us-west-2.amazonaws.com/amazon-eks/$KUBE_VERSION/2023-03-17/bin/darwin/amd64/kubectl"
 BIN_DIR="$HOME/bin"
 CUSTOM_RC_PATH="$HOME/.customrc"
+AWS_PROFILES=$(aws configure list-profiles)
+CLUSTERS=("dev-apne2" "dev-use1" "prod-apne2" "prod-use1")
 
 # Check if the machine is running macOS
 if [[ "$(uname)" != "Darwin" ]]; then
@@ -57,70 +59,7 @@ add_path_to_custom_rc() {
     fi
 }
 
-# Function to download a file from a URL
-download_file() {
-    local url=$1
-    local filename=$2
-    if ! curl -sSf "$url" -o "$filename"; then
-        color_echo "$ERROR_COLOR" "Failed to download $filename from $url"
-        exit 1
-    fi
-}
-# Function to install AWS CLI
-install_aws() {
-    color_echo "$INFO_COLOR" "Downloading AWS CLI installer..."
-    download_file "https://awscli.amazonaws.com/AWSCLIV2.pkg" "AWSCLIV2.pkg"
-    color_echo "$INFO_COLOR" "Installing AWS CLI..."
-    sudo installer -pkg AWSCLIV2.pkg -target / 
-    color_echo "$INFO_COLOR" "Cleaning up temporary files..."
-    rm ./AWSCLIV2.pkg 
 
-}
-
-install_aws-iam-authenticator() {
-    color_echo "$INFO_COLOR" "Downloading aws-iam-authenticator installer..."
-    download_file "$AWS_IAM_AUTH_DOWNLOAD_URL" "aws-iam-authenticator"
-    color_echo "$INFO_COLOR" "Changing execute mode ..."
-    chmod +x ./aws-iam-authenticator
-    mv ./aws-iam-authenticator $BIN_DIR/aws-iam-authenticator
-}
-
-install_kubectl() {
-    color_echo "$INFO_COLOR" "Downloading kubectl installer..."
-    download_file "$KUBE_DOWNLOAD_URL" "kubectl"
-    color_echo "$INFO_COLOR" "Changing execute mode ..."
-    chmod +x ./kubectl 
-    mv ./kubectl $BIN_DIR/kubectl
-}
-
-# if ! command -v aws >/dev/null 2>&1; then 
-#     install_aws 
-#     # Verify the installation
-#     color_echo "$INFO_COLOR" "Verifying AWS CLI installation..."
-#     aws --version
-# else
-#     echo "aws cli already installed"
-#     aws --version
-
-# fi
-# if ! command -v aws-iam-authenticator >/dev/null 2>&1; then 
-#     install_aws-iam-authenticator
-#     # Verify the installation
-#     color_echo "$INFO_COLOR" "Verifying aws-iam-authenticator installation..."
-#     aws-iam-authenticator version
-# else
-#     echo "aws-iam-authenticator already installed"
-#     aws-iam-authenticator version
-# fi
-# if ! command -v kubectl >/dev/null 2>&1; then 
-#     install_kubectl
-#     # Verify the installation
-#     color_echo "$INFO_COLOR" "Verifying kubectl installation..."
-#     kubectl version --short --client
-# else
-#     echo "kubectl already installed"
-#     kubectl version --short --client
-# fi
 
 COMMANDS=("aws" "aws-iam-authenticator" "kubectl")
 for command in "${COMMANDS[@]}"; do
@@ -136,8 +75,6 @@ kubectl_get_contexts() {
     kubectl config get-contexts -o name
 }
 
-AWS_PROFILES=$(aws configure list-profiles)
-CLUSTERS=("dev-apne2" "dev-use1" "prod-apne2" "prod-use1")
 # for profile in "${AWS_PROFILES[@]}"; do
 #     for cluster in "${CLUSTERS[@]}"; do
 #         case $cluster in 

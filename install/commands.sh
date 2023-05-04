@@ -2,7 +2,7 @@
 set -e
 
 # Function to print colored messages
-function color_echo {
+color_echo() {
     local color=$1
     shift
     printf "${color}%s${NO_COLOR}\n" "$@"
@@ -16,6 +16,8 @@ WARNING_COLOR='\033[1;33m'
 NO_COLOR='\033[0m'
 
 # Define variables
+AWS_PROFILES=$(aws configure list-profiles)
+COMMANDS=("aws" "aws-iam-authenticator" "kubectl")
 AWS_IAM_AUTH_VERSION="0.5.9"
 AWS_IAM_AUTH_DOWNLOAD_URL="https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v${AWS_IAM_AUTH_VERSION}/aws-iam-authenticator_${AWS_IAM_AUTH_VERSION}_darwin_amd64"
 KUBE_VERSION="1.25.7"
@@ -42,18 +44,18 @@ fi
 # Adds the custom rc command to .zshrc
 add_custom_rc() {
     if grep -q "source $CUSTOM_RC_PATH" ~/.zshrc; then 
-        echo ".customrc already exists in .zshrc"
+        color_echo "$INFO_COLOR" ".customrc already exists in .zshrc"
     else 
         echo "source $CUSTOM_RC_PATH" >> ~/.zshrc
-        echo ".customrc added to .zshrc"
+        color_echo "$INFO_COLOR" ".customrc added to .zshrc"
     fi
 }
 add_path_to_custom_rc() {
     if grep -q 'export export PATH=$PATH:$HOME/bin' "$CUSTOM_RC_PATH"; then 
-        echo "PATH already setup in .customrc"
+        color_echo "$INFO_COLOR" "PATH already setup in .customrc"
     else 
-        echo 'export export PATH=$PATH:$HOME/bin' >> "$CUSTOM_RC_PATH"
-        echo "PATH added to .customrc"
+        color_echo "$INFO_COLOR" 'export export PATH=$PATH:$HOME/bin' >> "$CUSTOM_RC_PATH"
+        color_echo "$INFO_COLOR" "PATH added to .customrc"
     fi
 }
 
@@ -61,7 +63,7 @@ add_path_to_custom_rc() {
 download_file() {
     local url=$1
     local filename=$2
-    if ! curl -sSf "$url" -o "$filename"; then
+    if ! curl -L "$url" -o "$filename"; then
         color_echo "$ERROR_COLOR" "Failed to download $filename from $url"
         exit 1
     fi
@@ -77,6 +79,7 @@ install_aws() {
 
 }
 
+# Function to install aws-iam-authenticator
 install_aws-iam-authenticator() {
     color_echo "$INFO_COLOR" "Downloading aws-iam-authenticator installer..."
     download_file "$AWS_IAM_AUTH_DOWNLOAD_URL" "aws-iam-authenticator"
@@ -85,6 +88,7 @@ install_aws-iam-authenticator() {
     mv ./aws-iam-authenticator $BIN_DIR/aws-iam-authenticator
 }
 
+# Function to install kubectl
 install_kubectl() {
     color_echo "$INFO_COLOR" "Downloading kubectl installer..."
     download_file "$KUBE_DOWNLOAD_URL" "kubectl"
@@ -93,65 +97,72 @@ install_kubectl() {
     mv ./kubectl $BIN_DIR/kubectl
 }
 
-# if ! command -v aws >/dev/null 2>&1; then 
-#     install_aws 
-#     # Verify the installation
-#     color_echo "$INFO_COLOR" "Verifying AWS CLI installation..."
-#     aws --version
-# else
-#     echo "aws cli already installed"
-#     aws --version
-
-# fi
-# if ! command -v aws-iam-authenticator >/dev/null 2>&1; then 
-#     install_aws-iam-authenticator
-#     # Verify the installation
-#     color_echo "$INFO_COLOR" "Verifying aws-iam-authenticator installation..."
-#     aws-iam-authenticator version
-# else
-#     echo "aws-iam-authenticator already installed"
-#     aws-iam-authenticator version
-# fi
-# if ! command -v kubectl >/dev/null 2>&1; then 
-#     install_kubectl
-#     # Verify the installation
-#     color_echo "$INFO_COLOR" "Verifying kubectl installation..."
-#     kubectl version --short --client
-# else
-#     echo "kubectl already installed"
-#     kubectl version --short --client
-# fi
-
-COMMANDS=("aws" "aws-iam-authenticator" "kubectl")
 for command in "${COMMANDS[@]}"; do
     if ! command -v $command >/dev/null 2>&1; then
-        install_"$command"
+        "install_$command"
+        color_echo "$INFO_COLOR" "$command installed"
     fi
 done
 
+# Execute directory and file setup
+add_custom_rc
+add_path_to_custom_rc
+
+# Commands validation
+color_echo "$REQUIRED_COLOR" "$(aws --version)"
+color_echo "$REQUIRED_COLOR" "$(aws-iam-authenticator version)"
+color_echo "$REQUIRED_COLOR" "$(kubectl version --short --client)"
+
+# Define cluster configurations for each environment
+# bash 5.x.x upgrade 
+declare -A CLUSTERS=( 
+    ["dev-apne2"]="ap-northeast-2"
+    ["dev-use1"]="us-east-1" 
+    ["prod-apne2"]="ap-northeast-2" 
+    ["prod-use1"]="us-east-1"
+)
+
+# Function to update kubeconfig for a given cluster and role
 update_kubeconfig() {
-    aws eks update-kubeconfig --profile "$1" --name "$2" --alias "$2" --region "$3"
+    local profile="$1"
+    local cluster="$2"
+    local region="${CLUSTERS[$cluster]}"
+    local team_name="$4"
+    local role_arn=""
+    if [ -n "$team_name" ]; then
+        role_arn=$(aws iam get-role --role-name "k8s-$team_name-team" --query 'Role.Arn' --no-cli-pager --output text)
+        aws eks update-kubeconfig --profile "$profile" --name "$cluster" --alias "$cluster" --region "$region" --role-arn "$role_arn"
+    else 
+        aws eks update-kubeconfig --profile "$profile" --name "$cluster" --alias "$cluster" --region "$region"
+
+    fi
 }
+
+# Function to prompt the user for their team name
+function get_team_name() {
+    local team_name=""
+    while [ -z "$team_name" ]; do
+        read -p "Enter your team name: " team_name
+    done
+    echo "$team_name"
+}
+
+# TEAM_NAME=$(get_team_name)
+
 kubectl_get_contexts() {
-    kubectl config get-contexts -o name
+    kubectl config get-contexts -o name "$1"
 }
+# Add cluster 
+# AWS_PROFILES=("suite-dev" "suite-prod")
+# Loop over cluster configurations for each environment
+for profile in "suite-dev" "suite-prod"; do
+    for cluster in "${!CLUSTERS[@]}"; do
+        if [[ "$profile" =~ "dev" ]] && [[ "$cluster" =~ "dev" ]]; then
+            update_kubeconfig "$profile" "$cluster" "${CLUSTERS[$cluster]}" "$TEAM_NAME"
+        fi
+        if [[ "$profile" =~ "prod" ]] && [[ "$cluster" =~ "prod" ]]; then
+            update_kubeconfig "$profile" "$cluster" "${CLUSTERS[$cluster]}" "$TEAM_NAME"
+        fi
+    done
+done
 
-AWS_PROFILES=$(aws configure list-profiles)
-CLUSTERS=("dev-apne2" "dev-use1" "prod-apne2" "prod-use1")
-# for profile in "${AWS_PROFILES[@]}"; do
-#     for cluster in "${CLUSTERS[@]}"; do
-#         case $cluster in 
-#             *apne2*)
-#                 region="ap-northeast-2"
-#                 update_kubeconfig "$profile" "$cluster" "$region"
-#                 ;;
-#             *use1*)
-#                 region="us-east-1"
-#                 update_kubeconfig "$profile" "$cluster" "$region"
-#                 ;;
-#         esac
-#     done
-# done
-
-# echo "Kubernetes contexts:"
-# kubectl_get_contexts
