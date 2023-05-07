@@ -10,8 +10,8 @@ NO_COLOR='\033[0m'
 
 # Define variables
 ZSHRC_FILE="$HOME/.zshrc"
-CUSTOM_RC_FILE="$HOME/.customrc1"
-BIN_DIR="$HOME/bin1"
+CUSTOM_RC_FILE="$HOME/.customrc"
+BIN_DIR="$HOME/bin"
 ADD_HOME_BIN_PATH='export PATH=$PATH:$HOME/bin'
 
 # Function to print colored messages
@@ -27,21 +27,23 @@ color_echo() {
 
 # Adds the custom rc command to .zshrc
 add_custom_rc() {
-    if grep -q "source $CUSTOM_RC_FILE" "$ZSHRC_FILE"; then 
-        color_echo "$WARNING_COLOR" "### $CUSTOM_RC_FILE already exists in $ZSHRC_FILE"
-    else 
-        echo "source $CUSTOM_RC_FILE" >> "$ZSHRC_FILE"
-        color_echo "$INFO_COLOR" "### $CUSTOM_RC_FILE added to $ZSHRC_FILE"
-    fi
+  if grep -q "source $CUSTOM_RC_FILE" "$ZSHRC_FILE"; then 
+    color_echo "$WARNING_COLOR" "### $CUSTOM_RC_FILE already exists in $ZSHRC_FILE"
+  else 
+    echo "source $CUSTOM_RC_FILE" >> "$ZSHRC_FILE"
+    color_echo "$INFO_COLOR" "### $CUSTOM_RC_FILE added to $ZSHRC_FILE"
+  fi
 }
 add_path_to_custom_rc() {
-    if grep -q "$ADD_HOME_BIN_PATH" "$CUSTOM_RC_FILE"; then 
-        color_echo "$WARNING_COLOR" "### $ADD_HOME_BIN_PATH already exists in $CUSTOM_RC_FILE"
-    else 
-        echo "$ADD_HOME_BIN_PATH" >> "$CUSTOM_RC_FILE"
-        color_echo "$INFO_COLOR" "### $ADD_HOME_BIN_PATH added to $CUSTOM_RC_FILE"
-    fi
+  if grep -q "$ADD_HOME_BIN_PATH" "$CUSTOM_RC_FILE"; then 
+    color_echo "$WARNING_COLOR" "### $ADD_HOME_BIN_PATH already exists in $CUSTOM_RC_FILE"
+  else 
+    echo "$ADD_HOME_BIN_PATH" >> "$CUSTOM_RC_FILE"
+    color_echo "$INFO_COLOR" "### $ADD_HOME_BIN_PATH added to $CUSTOM_RC_FILE"
+  fi
 }
 
 add_custom_rc
 add_path_to_custom_rc
+
+color_echo "$INFO_COLOR" "### Script completed successfully"

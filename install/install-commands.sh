@@ -8,12 +8,18 @@ REQUIRED_COLOR='\033[1;36m'
 WARNING_COLOR='\033[1;33m'
 NO_COLOR='\033[0m'
 
-# Define variables
+# Define VERSION variables
 COMMANDS=("aws" "aws-iam-authenticator" "kubectl")
 AWS_IAM_AUTH_VERSION="0.5.9"
 AWS_IAM_AUTH_DOWNLOAD_URL="https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v${AWS_IAM_AUTH_VERSION}/aws-iam-authenticator_${AWS_IAM_AUTH_VERSION}_darwin_amd64"
 KUBE_VERSION="1.25.7"
 KUBE_DOWNLOAD_URL="https://s3.us-west-2.amazonaws.com/amazon-eks/$KUBE_VERSION/2023-03-17/bin/darwin/amd64/kubectl"
+
+# Define PATH variables
+ZSHRC_FILE="$HOME/.zshrc"
+CUSTOM_RC_FILE="$HOME/.customrc1"
+BIN_DIR="$HOME/bin1"
+ADD_HOME_BIN_PATH='export PATH=$PATH:$HOME/bin'
 
 # Function to print colored messages
 color_echo() {
@@ -72,5 +78,9 @@ for command in "${COMMANDS[@]}"; do
   else
     color_echo "$WARNING_COLOR" "### $command already installed"
   fi
-  color_echo "$INFO_COLOR" "### $command $(commands_version)"
 done
+
+# check version
+color_echo "$REQUIRED_COLOR" "### $command $(commands_version)"
+
+color_echo "$INFO_COLOR" "### Script completed successfully"
