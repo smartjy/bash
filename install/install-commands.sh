@@ -17,8 +17,8 @@ KUBE_DOWNLOAD_URL="https://s3.us-west-2.amazonaws.com/amazon-eks/$KUBE_VERSION/2
 
 # Define PATH variables
 ZSHRC_FILE="$HOME/.zshrc"
-CUSTOM_RC_FILE="$HOME/.customrc1"
-BIN_DIR="$HOME/bin1"
+CUSTOM_RC_FILE="$HOME/.customrc"
+BIN_DIR="$HOME/bin"
 ADD_HOME_BIN_PATH='export PATH=$PATH:$HOME/bin'
 
 # Function to print colored messages
