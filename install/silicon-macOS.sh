@@ -27,6 +27,9 @@ if [[ "$(uname -m)" != "arm64" ]]; then
     exit 1
 fi
 
+# AWS Profile list
+AWS_PROFILES=( "suite-dev1" "suite-prod1" )
+
 # Define variables
 COMMANDS=("aws" "aws-iam-authenticator" "kubectl")
 AWS_IAM_AUTH_VERSION="0.5.9"
@@ -40,8 +43,6 @@ CUSTOM_RC_FILE="$HOME/.customrc"
 BIN_DIR="$HOME/bin"
 ADD_HOME_BIN_PATH='export PATH=$PATH:$HOME/bin'
 
-# AWS Profile list
-AWS_PROFILES=( "suite-dev" "suite-prod" )
 
 # Define Functions
 download_file() {
@@ -162,12 +163,18 @@ get_team_name() {
   read -p "$(color_echo "$REQUIRED_COLOR" "### Enter your team name:") " team_name
 
   if [ -z "$team_name" ]; then
-    read -p "$(color_echo "$REQUIRED_COLOR" "team_name was not selected. May not work this script? [Press Enter]") "
+    read -p "$(color_echo "$WARNING_COLOR" "team_name was not selected. May not work this script? [Press Enter]") "
   fi
   echo $team_name
 }
 # Put TEAM_NAME
 TEAM_NAME=$(get_team_name)
+
+# Function to check aws profiles
+validate_profile() {
+  local profile="$1"
+  aws configure list-profiles | grep -q "$1"
+}
 
 # Function to check if a context already exists in kubeconfig
 context_exists() {
@@ -176,6 +183,10 @@ context_exists() {
 
 # Loop over cluster configurations for each environment
 for profile in "${AWS_PROFILES[@]}"; do
+  if ! validate_profile $profile; then
+    color_echo "$ERROR_COLOR" "### $prof aws profile not valid (e.g suite-dev suite-prod)"
+    exit 1
+  fi
   for cluster in "${!CLUSTERS[@]}"; do
     if [[ "$profile" =~ "dev" ]] && [[ "$cluster" =~ "dev" ]]; then
       if ! context_exists "$cluster"; then 
@@ -196,4 +207,4 @@ for profile in "${AWS_PROFILES[@]}"; do
   done
 done
 
-color_echo "$INFO_COLOR" "### AWS EKS Cluster add completed successfully"
+# color_echo "$INFO_COLOR" "### AWS EKS Cluster add completed successfully"
